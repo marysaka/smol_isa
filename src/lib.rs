@@ -1,3 +1,32 @@
+enum Register {
+    Ic,
+    Fg,
+    Cr,
+    Sp,
+    Zr,
+    R0,
+    R1,
+    R2,
+    R3,
+    R4,
+    R5,
+    R6,
+    R7,
+    L0,
+    L1,
+}
+
+struct RegisterValue {
+    value: u16, // TODO: Either u8 or u16
+    register: Register,
+}
+
+impl RegisterValue {
+    fn new(value: u16, register: Register) -> Self {
+        Self { value, register }
+    }
+}
+
 #[derive(Debug, Default)]
 #[allow(dead_code)]
 pub struct Registers {
@@ -77,49 +106,49 @@ pub struct Vm {
 }
 
 impl Vm {
-    fn register_val(&self, reg: u8) -> u16 {
+    fn register_val(&self, reg: u8) -> RegisterValue {
         match reg {
-            0b0000 => self.registers.r0 as u16,
-            0b0001 => self.registers.r1 as u16,
-            0b0010 => self.registers.r2 as u16,
-            0b0011 => self.registers.r3 as u16,
-            0b0100 => self.registers.r4 as u16,
-            0b0101 => self.registers.r5 as u16,
-            0b0110 => self.registers.r6 as u16,
-            0b0111 => self.registers.r7 as u16,
+            0b0000 => RegisterValue::new(self.registers.r0 as u16, Register::R0),
+            0b0001 => RegisterValue::new(self.registers.r1 as u16, Register::R1),
+            0b0010 => RegisterValue::new(self.registers.r2 as u16, Register::R2),
+            0b0011 => RegisterValue::new(self.registers.r3 as u16, Register::R3),
+            0b0100 => RegisterValue::new(self.registers.r4 as u16, Register::R4),
+            0b0101 => RegisterValue::new(self.registers.r5 as u16, Register::R5),
+            0b0110 => RegisterValue::new(self.registers.r6 as u16, Register::R6),
+            0b0111 => RegisterValue::new(self.registers.r7 as u16, Register::R7),
             0b1000 => todo!("What register is 0b1000?"),
-            0b1001 => self.registers.l0,
-            0b1010 => self.registers.l1,
-            0b1011 => self.registers.ic,
-            0b1100 => self.registers.fg,
-            0b1110 => self.registers.sp,
-            0b1111 => self.registers.zr,
+            0b1001 => RegisterValue::new(self.registers.l0, Register::L0),
+            0b1010 => RegisterValue::new(self.registers.l1, Register::L1),
+            0b1011 => RegisterValue::new(self.registers.ic, Register::Ic),
+            0b1100 => RegisterValue::new(self.registers.fg, Register::Fg),
+            0b1101 => RegisterValue::new(self.registers.cr, Register::Cr),
+            0b1110 => RegisterValue::new(self.registers.sp, Register::Sp),
+            0b1111 => RegisterValue::new(self.registers.zr, Register::Zr),
             _ => unreachable!("Tried to access nonexsisting register {reg}"),
         }
     }
 
-    fn register_save(&mut self, reg: u8, val: u16) {
-        match reg {
-            0b0000 => self.registers.r0 = val as u8,
-            0b0001 => self.registers.r1 = val as u8,
-            0b0010 => self.registers.r2 = val as u8,
-            0b0011 => self.registers.r3 = val as u8,
-            0b0100 => self.registers.r4 = val as u8,
-            0b0101 => self.registers.r5 = val as u8,
-            0b0110 => self.registers.r6 = val as u8,
-            0b0111 => self.registers.r7 = val as u8,
-            0b1000 => todo!("What register is 0b1000?"),
-            0b1001 => self.registers.l0 = val,
-            0b1010 => self.registers.l1 = val,
-            0b1011 => self.registers.ic = val,
-            0b1100 => self.registers.fg = val,
-            0b1110 => self.registers.sp = val,
-            0b1111 => self.registers.zr = val,
-            _ => unreachable!("Tried to access nonexsisting register {reg}"),
+    fn register_save(&mut self, reg: RegisterValue) {
+        match reg.register {
+            Register::R0 => self.registers.r0 = reg.value as u8,
+            Register::R1 => self.registers.r1 = reg.value as u8,
+            Register::R2 => self.registers.r2 = reg.value as u8,
+            Register::R3 => self.registers.r3 = reg.value as u8,
+            Register::R4 => self.registers.r4 = reg.value as u8,
+            Register::R5 => self.registers.r5 = reg.value as u8,
+            Register::R6 => self.registers.r6 = reg.value as u8,
+            Register::R7 => self.registers.r7 = reg.value as u8,
+            Register::L0 => self.registers.l0 = reg.value,
+            Register::L1 => self.registers.l1 = reg.value,
+            Register::Ic => self.registers.ic = reg.value,
+            Register::Fg => self.registers.fg = reg.value,
+            Register::Cr => self.registers.cr = reg.value,
+            Register::Sp => self.registers.sp = reg.value,
+            Register::Zr => self.registers.zr = reg.value,
         }
     }
 
-    fn decode_registers(&self, regs: u8) -> (u16, u16) {
+    fn decode_registers(&self, regs: u8) -> (RegisterValue, RegisterValue) {
         let r0 = regs & 0b1111;
         let r1 = (regs >> 4) & 0b1111;
         (self.register_val(r0), self.register_val(r1))
@@ -127,7 +156,7 @@ impl Vm {
 
     fn decode_alu_instr(&mut self, instr: u8) {
         // TODO: function if Increment/Decrement
-        let source_vals = match instr & 0b100000 {
+        let mut source_vals = match instr & 0b100000 {
             0b000000 => {
                 let regs = self.instructions.get(self.registers.ic + 1);
                 self.decode_registers(regs)
@@ -139,10 +168,8 @@ impl Vm {
         match (instr >> 2) & 0b111 {
             // Add
             0b000 => {
-                let total = source_vals.0 + source_vals.1;
-                let regs = self.instructions.get(self.registers.ic + 1);
-                let reg = regs & 0b1111;
-                self.register_save(reg, total);
+                source_vals.0.value += source_vals.1.value;
+                self.register_save(source_vals.0);
             }
             // Since we use and (&) we limit ourself to values 0-3
             _ => unimplemented!("Only Add AluFamily is implemnted"),
