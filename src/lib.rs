@@ -46,7 +46,7 @@ pub struct Stack {
 impl Default for Stack {
     fn default() -> Self {
         Self {
-            memory: [0; u16::MAX as usize]
+            memory: [0; u16::MAX as usize],
         }
     }
 }
