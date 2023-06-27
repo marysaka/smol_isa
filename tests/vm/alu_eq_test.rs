@@ -240,11 +240,11 @@ pub fn it_binary_xors_r7_r4() {
     assert_eq!(vm.registers.r7, 1);
 }
 
-// #[test]
+#[test]
 pub fn it_binary_nots_r0() {
     // TODO: fix this since it's not working due to u8 -> u16 stuffs
     let mut vm = smol_isa::Vm::default();
-    vm.registers.r0 = 0b111101;
+    vm.registers.r0 = 0b1111_1101;
     vm.instructions.instructions = vec![
         // ALU Binary not from Register
         0b00_101_0_0_0,
@@ -253,10 +253,10 @@ pub fn it_binary_nots_r0() {
     ];
     vm.run();
 
-    assert_eq!(vm.registers.r0, 5);
+    assert_eq!(vm.registers.r0, 0b0000010);
 }
 
-// #[test]
+#[test]
 pub fn it_binary_nots_r2() {
     let mut vm = smol_isa::Vm::default();
     vm.registers.r2 = 123;
@@ -271,10 +271,10 @@ pub fn it_binary_nots_r2() {
     assert_eq!(vm.registers.r2, 132);
 }
 
-// #[test]
+#[test]
 pub fn it_binary_nots_r7() {
     let mut vm = smol_isa::Vm::default();
-    vm.registers.r7 = 0b01101111;
+    vm.registers.r7 = 0b0110_1111;
     vm.instructions.instructions = vec![
         // ALU Binary not from Register
         0b00_101_0_0_0,
@@ -283,7 +283,7 @@ pub fn it_binary_nots_r7() {
     ];
     vm.run();
 
-    assert_eq!(vm.registers.r7, 0b10010000);
+    assert_eq!(vm.registers.r7, 0b1001_0000);
 }
 
 #[test]
