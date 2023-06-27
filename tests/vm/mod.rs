@@ -1,1 +1,1 @@
-mod add_test;
+mod alu_eq_test;
