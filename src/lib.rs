@@ -155,25 +155,53 @@ impl Vm {
     }
 
     fn decode_alu_instr(&mut self, instr: u8) {
-        // TODO: function if Increment/Decrement
-        let mut source_vals = match instr & 0b100000 {
-            0b000000 => {
+        let mut source_vals = match instr & 0b100 {
+            0b000 => {
                 let regs = self.instructions.get(self.registers.ic + 1);
                 self.decode_registers(regs)
             }
-            0b100000 => todo!("Impl Immediate ALUSource"),
+            // TODO: Do something less hacky
+            0b100 => {
+                let regs = self.instructions.get(self.registers.ic + 1);
+                self.decode_registers(regs)
+            },
+            0b100  => todo!("Impl Immediate ALUSource"),
             _ => unreachable!(),
         };
 
-        match (instr >> 2) & 0b111 {
+        match (instr >> 3) & 0b111 {
             // Add
-            0b000 => {
-                source_vals.0.value += source_vals.1.value;
-                self.register_save(source_vals.0);
+            0b000 => source_vals.0.value += source_vals.1.value,
+            // Subtract
+            0b001 => source_vals.0.value -= source_vals.1.value,
+            // Binary and
+            0b010 => source_vals.0.value &= source_vals.1.value,
+            // Binary or
+            0b011 => source_vals.0.value |= source_vals.1.value,
+            // Binary xor
+            0b100 => source_vals.0.value ^= source_vals.1.value,
+            // Binary not
+            0b101 => source_vals.0.value = !source_vals.0.value,
+            // Equality
+            0b110 => {
+                // TODO: implement this with branching
+                unimplemented!("ALUEquality is not implemented")
             }
+            0b111 => {
+                // Decode the increment/decrement function
+                source_vals.0.value = match instr & 0b100 {
+                    // Increment
+                    0b000 => source_vals.0.value + 1,
+                    // Decrement
+                    0b100 => source_vals.0.value - 1,
+                    _ => unreachable!("This statement should be literally impossible"),
+                }
+            }
+
             // Since we use and (&) we limit ourself to values 0-3
             _ => unimplemented!("Only Add AluFamily is implemnted"),
         }
+        self.register_save(source_vals.0);
     }
 
     fn decode_next_instr(&mut self) {
