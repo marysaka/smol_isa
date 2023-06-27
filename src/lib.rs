@@ -1,3 +1,134 @@
+use std::ops::{
+    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not, Sub,
+    SubAssign,
+};
+
+#[derive(Debug, Clone, Copy)]
+enum Either<L, R> {
+    Left(L),
+    Right(R),
+}
+
+type RegEither = Either<u8, u16>;
+
+impl RegEither {
+    fn as_u8(self) -> u8 {
+        match self {
+            Self::Left(v) => v,
+            Self::Right(v) => v as u8,
+        }
+    }
+
+    fn as_u16(self) -> u16 {
+        match self {
+            Self::Left(v) => v as u16,
+            Self::Right(v) => v,
+        }
+    }
+}
+
+impl From<u8> for RegEither {
+    fn from(value: u8) -> Self {
+        RegEither::Left(value)
+    }
+}
+
+impl From<u16> for RegEither {
+    fn from(value: u16) -> Self {
+        RegEither::Right(value)
+    }
+}
+
+macro_rules! either_oper {
+    ($lvalue:expr, $rvalue:expr, $op:tt) => {
+        match $lvalue {
+            Either::Left(value) => Either::Left(value $op $rvalue.as_u8()),
+            Either::Right(value) => Either::Right(value $op $rvalue.as_u16()),
+        }
+    };
+}
+
+impl Add for RegEither {
+    type Output = RegEither;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        either_oper!(self, rhs, +)
+    }
+}
+
+impl Sub for RegEither {
+    type Output = RegEither;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        either_oper!(self, rhs, -)
+    }
+}
+
+impl BitAnd for RegEither {
+    type Output = RegEither;
+
+    fn bitand(self, rhs: Self) -> Self::Output {
+        either_oper!(self, rhs, &)
+    }
+}
+
+impl BitOr for RegEither {
+    type Output = RegEither;
+
+    fn bitor(self, rhs: Self) -> Self::Output {
+        either_oper!(self, rhs, |)
+    }
+}
+
+impl BitXor for RegEither {
+    type Output = RegEither;
+
+    fn bitxor(self, rhs: Self) -> Self::Output {
+        either_oper!(self, rhs, ^)
+    }
+}
+
+impl Not for RegEither {
+    type Output = RegEither;
+
+    fn not(self) -> Self::Output {
+        match self {
+            Either::Left(value) => Either::Left(!value),
+            Either::Right(value) => Either::Right(!value),
+        }
+    }
+}
+
+impl AddAssign for RegEither {
+    fn add_assign(&mut self, rhs: Self) {
+        *self = *self + rhs
+    }
+}
+
+impl SubAssign for RegEither {
+    fn sub_assign(&mut self, rhs: Self) {
+        *self = *self - rhs
+    }
+}
+
+impl BitXorAssign for RegEither {
+    fn bitxor_assign(&mut self, rhs: Self) {
+        *self = *self ^ rhs
+    }
+}
+
+impl BitOrAssign for RegEither {
+    fn bitor_assign(&mut self, rhs: Self) {
+        *self = *self | rhs
+    }
+}
+
+impl BitAndAssign for RegEither {
+    fn bitand_assign(&mut self, rhs: Self) {
+        *self = *self & rhs
+    }
+}
+
 enum Register {
     Ic,
     Fg,
@@ -17,12 +148,12 @@ enum Register {
 }
 
 struct RegisterValue {
-    value: u16, // TODO: Either u8 or u16
+    value: RegEither,
     register: Register,
 }
 
 impl RegisterValue {
-    fn new(value: u16, register: Register) -> Self {
+    fn new(value: RegEither, register: Register) -> Self {
         Self { value, register }
     }
 }
@@ -108,43 +239,43 @@ pub struct Vm {
 impl Vm {
     fn register_val(&self, reg: u8) -> RegisterValue {
         match reg {
-            0b0000 => RegisterValue::new(self.registers.r0 as u16, Register::R0),
-            0b0001 => RegisterValue::new(self.registers.r1 as u16, Register::R1),
-            0b0010 => RegisterValue::new(self.registers.r2 as u16, Register::R2),
-            0b0011 => RegisterValue::new(self.registers.r3 as u16, Register::R3),
-            0b0100 => RegisterValue::new(self.registers.r4 as u16, Register::R4),
-            0b0101 => RegisterValue::new(self.registers.r5 as u16, Register::R5),
-            0b0110 => RegisterValue::new(self.registers.r6 as u16, Register::R6),
-            0b0111 => RegisterValue::new(self.registers.r7 as u16, Register::R7),
+            0b0000 => RegisterValue::new(self.registers.r0.into(), Register::R0),
+            0b0001 => RegisterValue::new(self.registers.r1.into(), Register::R1),
+            0b0010 => RegisterValue::new(self.registers.r2.into(), Register::R2),
+            0b0011 => RegisterValue::new(self.registers.r3.into(), Register::R3),
+            0b0100 => RegisterValue::new(self.registers.r4.into(), Register::R4),
+            0b0101 => RegisterValue::new(self.registers.r5.into(), Register::R5),
+            0b0110 => RegisterValue::new(self.registers.r6.into(), Register::R6),
+            0b0111 => RegisterValue::new(self.registers.r7.into(), Register::R7),
             0b1000 => todo!("What register is 0b1000?"),
-            0b1001 => RegisterValue::new(self.registers.l0, Register::L0),
-            0b1010 => RegisterValue::new(self.registers.l1, Register::L1),
-            0b1011 => RegisterValue::new(self.registers.ic, Register::Ic),
-            0b1100 => RegisterValue::new(self.registers.fg, Register::Fg),
-            0b1101 => RegisterValue::new(self.registers.cr, Register::Cr),
-            0b1110 => RegisterValue::new(self.registers.sp, Register::Sp),
-            0b1111 => RegisterValue::new(self.registers.zr, Register::Zr),
+            0b1001 => RegisterValue::new(self.registers.l0.into(), Register::L0),
+            0b1010 => RegisterValue::new(self.registers.l1.into(), Register::L1),
+            0b1011 => RegisterValue::new(self.registers.ic.into(), Register::Ic),
+            0b1100 => RegisterValue::new(self.registers.fg.into(), Register::Fg),
+            0b1101 => RegisterValue::new(self.registers.cr.into(), Register::Cr),
+            0b1110 => RegisterValue::new(self.registers.sp.into(), Register::Sp),
+            0b1111 => RegisterValue::new(self.registers.zr.into(), Register::Zr),
             _ => unreachable!("Tried to access nonexsisting register {reg}"),
         }
     }
 
     fn register_save(&mut self, reg: RegisterValue) {
         match reg.register {
-            Register::R0 => self.registers.r0 = reg.value as u8,
-            Register::R1 => self.registers.r1 = reg.value as u8,
-            Register::R2 => self.registers.r2 = reg.value as u8,
-            Register::R3 => self.registers.r3 = reg.value as u8,
-            Register::R4 => self.registers.r4 = reg.value as u8,
-            Register::R5 => self.registers.r5 = reg.value as u8,
-            Register::R6 => self.registers.r6 = reg.value as u8,
-            Register::R7 => self.registers.r7 = reg.value as u8,
-            Register::L0 => self.registers.l0 = reg.value,
-            Register::L1 => self.registers.l1 = reg.value,
-            Register::Ic => self.registers.ic = reg.value,
-            Register::Fg => self.registers.fg = reg.value,
-            Register::Cr => self.registers.cr = reg.value,
-            Register::Sp => self.registers.sp = reg.value,
-            Register::Zr => self.registers.zr = reg.value,
+            Register::R0 => self.registers.r0 = reg.value.as_u8(),
+            Register::R1 => self.registers.r1 = reg.value.as_u8(),
+            Register::R2 => self.registers.r2 = reg.value.as_u8(),
+            Register::R3 => self.registers.r3 = reg.value.as_u8(),
+            Register::R4 => self.registers.r4 = reg.value.as_u8(),
+            Register::R5 => self.registers.r5 = reg.value.as_u8(),
+            Register::R6 => self.registers.r6 = reg.value.as_u8(),
+            Register::R7 => self.registers.r7 = reg.value.as_u8(),
+            Register::L0 => self.registers.l0 = reg.value.as_u16(),
+            Register::L1 => self.registers.l1 = reg.value.as_u16(),
+            Register::Ic => self.registers.ic = reg.value.as_u16(),
+            Register::Fg => self.registers.fg = reg.value.as_u16(),
+            Register::Cr => self.registers.cr = reg.value.as_u16(),
+            Register::Sp => self.registers.sp = reg.value.as_u16(),
+            Register::Zr => self.registers.zr = reg.value.as_u16(),
         }
     }
 
@@ -161,11 +292,11 @@ impl Vm {
                 self.decode_registers(regs)
             }
             // TODO: Do something less hacky
-            0b100 => {
+            0b100 if (instr >> 3) & 0b111 == 0b111 => {
                 let regs = self.instructions.get(self.registers.ic + 1);
                 self.decode_registers(regs)
-            },
-            0b100  => todo!("Impl Immediate ALUSource"),
+            }
+            0b100 => todo!("Impl Immediate ALUSource"),
             _ => unreachable!(),
         };
 
@@ -191,9 +322,9 @@ impl Vm {
                 // Decode the increment/decrement function
                 source_vals.0.value = match instr & 0b100 {
                     // Increment
-                    0b000 => source_vals.0.value + 1,
+                    0b000 => source_vals.0.value + (1_u8).into(),
                     // Decrement
-                    0b100 => source_vals.0.value - 1,
+                    0b100 => source_vals.0.value - (1_u8).into(),
                     _ => unreachable!("This statement should be literally impossible"),
                 }
             }
