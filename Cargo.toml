@@ -1,5 +1,6 @@
 [workspace]
 
 members = [
+    "smol_asm",
     "smol_vm",
 ]
