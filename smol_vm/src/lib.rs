@@ -285,20 +285,29 @@ impl Vm {
         (self.register_val(r0), self.register_val(r1))
     }
 
-    fn decode_alu_instr(&mut self, instr: u8) {
-        let mut source_vals = match instr & 0b100 {
+    fn decode_alu_instr(&mut self, instr: u8) -> u16 {
+        let (used, source_vals) = match instr & 0b100 {
             0b000 => {
                 let regs = self.instructions.get(self.registers.ic + 1);
-                self.decode_registers(regs)
+                (2, self.decode_registers(regs))
             }
             // TODO: Do something less hacky
             0b100 if (instr >> 3) & 0b111 == 0b111 => {
                 let regs = self.instructions.get(self.registers.ic + 1);
-                self.decode_registers(regs)
+                (2, self.decode_registers(regs))
             }
-            0b100 => todo!("Impl Immediate ALUSource"),
+            0b100 => {
+                // TODO: Don't hackily ignore the second encoded register
+                let regs = self.instructions.get(self.registers.ic + 1);
+                let value = self.instructions.get(self.registers.ic + 2);
+                let mut regs = self.decode_registers(regs);
+                regs.1.value = value.into();
+                (3, regs)
+            }
             _ => unreachable!(),
         };
+
+        let mut source_vals = source_vals;
 
         match (instr >> 3) & 0b111 {
             // Add
@@ -333,6 +342,8 @@ impl Vm {
             _ => unimplemented!("Only Add AluFamily is implemnted"),
         }
         self.register_save(source_vals.0);
+
+        used
     }
 
     fn decode_next_instr(&mut self) {
@@ -340,8 +351,8 @@ impl Vm {
 
         match (instr >> 6) & 0b11 {
             0b00 => {
-                self.decode_alu_instr(instr);
-                self.registers.ic += 2;
+                let used = self.decode_alu_instr(instr);
+                self.registers.ic += used;
             }
             0b01 => unimplemented!("LoadStore is not implemented"),
             0b10 => unimplemented!("StackIntr is not implemented"),

@@ -49,6 +49,23 @@ pub fn it_adds_r7_r4() {
 }
 
 #[test]
+pub fn it_iadds_r7_123() {
+    let mut vm = Vm::default();
+    vm.registers.r7 = 100;
+    vm.instructions.instructions = vec![
+        // ALU Add from Immediate
+        0b00_000_1_0_0,
+        // Registers r7 and r4
+        0b0100_0111,
+        // Immediate 11
+        11,
+    ];
+    vm.run();
+
+    assert_eq!(vm.registers.r7, 111);
+}
+
+#[test]
 pub fn it_substracts_r0_r1() {
     let mut vm = Vm::default();
     vm.registers.r0 = 5;
