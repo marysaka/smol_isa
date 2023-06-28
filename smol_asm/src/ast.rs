@@ -27,8 +27,8 @@ struct Arg1<A1: Register> {
 
 #[derive(Debug)]
 pub struct Arg2<A1: Register, A2: Register> {
-    arg1: A1,
-    arg2: A2,
+    pub arg1: A1,
+    pub arg2: A2,
 }
 
 impl<A1: Register, A2: Register> Arg for Arg2<A1, A2> {
@@ -85,7 +85,7 @@ pub trait Register {
 
 #[derive(Debug)]
 pub struct R8 {
-    register: R8Regs,
+    pub register: R8Regs,
 }
 
 impl TryFrom<&str> for R8 {
@@ -98,9 +98,7 @@ impl TryFrom<&str> for R8 {
             Err(format!("Expected r0-7, received {value}"))
         }
 
-        if val.len() != 2 {
-            return fail(value);
-        } else if val.as_bytes()[0] != b'r' {
+        if val.len() != 2 || val.as_bytes()[0] != b'r' {
             return fail(value);
         }
 
@@ -138,7 +136,7 @@ impl Register for R8 {
 
 #[derive(Debug)]
 pub struct I8 {
-    value: u8,
+    pub value: u8,
 }
 
 impl TryFrom<&str> for I8 {
@@ -173,6 +171,10 @@ pub struct InstrLine<T> {
 impl<T> InstrLine<T> {
     fn new(instr: T, line: usize) -> Self {
         Self { instr, line }
+    }
+
+    pub fn inner(&self) -> &T {
+        &self.instr
     }
 }
 

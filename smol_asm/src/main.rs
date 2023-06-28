@@ -1,4 +1,5 @@
 mod ast;
+mod compiler;
 
 const FILE_DATA: &str = "
 
@@ -7,6 +8,7 @@ const FILE_DATA: &str = "
 ";
 
 fn main() {
-    let tree = ast::parse_source(FILE_DATA);
-    println!("{tree:#?}");
+    let tree = ast::parse_source(FILE_DATA).unwrap();
+    let binary = compiler::compile_instructions(tree);
+    println!("{binary:#?}");
 }
