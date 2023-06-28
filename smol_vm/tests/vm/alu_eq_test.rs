@@ -1,8 +1,8 @@
-use smol_isa;
+use smol_vm::Vm;
 
 #[test]
 pub fn it_adds_r0_r1() {
-    let mut vm = smol_isa::Vm::default();
+    let mut vm = Vm::default();
     vm.registers.r0 = 1;
     vm.registers.r1 = 2;
     vm.instructions.instructions = vec![
@@ -18,7 +18,7 @@ pub fn it_adds_r0_r1() {
 
 #[test]
 pub fn it_adds_r2_r3() {
-    let mut vm = smol_isa::Vm::default();
+    let mut vm = Vm::default();
     vm.registers.r2 = 2;
     vm.registers.r3 = 6;
     vm.instructions.instructions = vec![
@@ -34,7 +34,7 @@ pub fn it_adds_r2_r3() {
 
 #[test]
 pub fn it_adds_r7_r4() {
-    let mut vm = smol_isa::Vm::default();
+    let mut vm = Vm::default();
     vm.registers.r4 = 11;
     vm.registers.r7 = 100;
     vm.instructions.instructions = vec![
@@ -50,7 +50,7 @@ pub fn it_adds_r7_r4() {
 
 #[test]
 pub fn it_substracts_r0_r1() {
-    let mut vm = smol_isa::Vm::default();
+    let mut vm = Vm::default();
     vm.registers.r0 = 5;
     vm.registers.r1 = 2;
     vm.instructions.instructions = vec![
@@ -66,7 +66,7 @@ pub fn it_substracts_r0_r1() {
 
 #[test]
 pub fn it_substracts_r2_r3() {
-    let mut vm = smol_isa::Vm::default();
+    let mut vm = Vm::default();
     vm.registers.r2 = 14;
     vm.registers.r3 = 6;
     vm.instructions.instructions = vec![
@@ -82,7 +82,7 @@ pub fn it_substracts_r2_r3() {
 
 #[test]
 pub fn it_substracts_r7_r4() {
-    let mut vm = smol_isa::Vm::default();
+    let mut vm = Vm::default();
     vm.registers.r4 = 100;
     vm.registers.r7 = 211;
     vm.instructions.instructions = vec![
@@ -98,7 +98,7 @@ pub fn it_substracts_r7_r4() {
 
 #[test]
 pub fn it_binary_ands_r0_r1() {
-    let mut vm = smol_isa::Vm::default();
+    let mut vm = Vm::default();
     vm.registers.r0 = 0b101;
     vm.registers.r1 = 0b100;
     vm.instructions.instructions = vec![
@@ -114,7 +114,7 @@ pub fn it_binary_ands_r0_r1() {
 
 #[test]
 pub fn it_binary_ands_r2_r3() {
-    let mut vm = smol_isa::Vm::default();
+    let mut vm = Vm::default();
     vm.registers.r2 = 14;
     vm.registers.r3 = 8;
     vm.instructions.instructions = vec![
@@ -130,7 +130,7 @@ pub fn it_binary_ands_r2_r3() {
 
 #[test]
 pub fn it_binary_ands_r7_r4() {
-    let mut vm = smol_isa::Vm::default();
+    let mut vm = Vm::default();
     vm.registers.r4 = 0b01111111;
     vm.registers.r7 = 0b11101111;
     vm.instructions.instructions = vec![
@@ -146,7 +146,7 @@ pub fn it_binary_ands_r7_r4() {
 
 #[test]
 pub fn it_binary_ors_r0_r1() {
-    let mut vm = smol_isa::Vm::default();
+    let mut vm = Vm::default();
     vm.registers.r0 = 0b101;
     vm.registers.r1 = 0b100;
     vm.instructions.instructions = vec![
@@ -162,7 +162,7 @@ pub fn it_binary_ors_r0_r1() {
 
 #[test]
 pub fn it_binary_ors_r2_r3() {
-    let mut vm = smol_isa::Vm::default();
+    let mut vm = Vm::default();
     vm.registers.r2 = 14;
     vm.registers.r3 = 8;
     vm.instructions.instructions = vec![
@@ -178,7 +178,7 @@ pub fn it_binary_ors_r2_r3() {
 
 #[test]
 pub fn it_binary_ors_r7_r4() {
-    let mut vm = smol_isa::Vm::default();
+    let mut vm = Vm::default();
     vm.registers.r4 = 0b01101111;
     vm.registers.r7 = 0b01101110;
     vm.instructions.instructions = vec![
@@ -194,7 +194,7 @@ pub fn it_binary_ors_r7_r4() {
 
 #[test]
 pub fn it_binary_xors_r0_r1() {
-    let mut vm = smol_isa::Vm::default();
+    let mut vm = Vm::default();
     vm.registers.r0 = 0b101;
     vm.registers.r1 = 0b100;
     vm.instructions.instructions = vec![
@@ -210,7 +210,7 @@ pub fn it_binary_xors_r0_r1() {
 
 #[test]
 pub fn it_binary_xors_r2_r3() {
-    let mut vm = smol_isa::Vm::default();
+    let mut vm = Vm::default();
     vm.registers.r2 = 14;
     vm.registers.r3 = 8;
     vm.instructions.instructions = vec![
@@ -226,7 +226,7 @@ pub fn it_binary_xors_r2_r3() {
 
 #[test]
 pub fn it_binary_xors_r7_r4() {
-    let mut vm = smol_isa::Vm::default();
+    let mut vm = Vm::default();
     vm.registers.r4 = 0b01101111;
     vm.registers.r7 = 0b01101110;
     vm.instructions.instructions = vec![
@@ -243,7 +243,7 @@ pub fn it_binary_xors_r7_r4() {
 #[test]
 pub fn it_binary_nots_r0() {
     // TODO: fix this since it's not working due to u8 -> u16 stuffs
-    let mut vm = smol_isa::Vm::default();
+    let mut vm = Vm::default();
     vm.registers.r0 = 0b1111_1101;
     vm.instructions.instructions = vec![
         // ALU Binary not from Register
@@ -258,7 +258,7 @@ pub fn it_binary_nots_r0() {
 
 #[test]
 pub fn it_binary_nots_r2() {
-    let mut vm = smol_isa::Vm::default();
+    let mut vm = Vm::default();
     vm.registers.r2 = 123;
     vm.instructions.instructions = vec![
         // ALU Binary not from Register
@@ -273,7 +273,7 @@ pub fn it_binary_nots_r2() {
 
 #[test]
 pub fn it_binary_nots_r7() {
-    let mut vm = smol_isa::Vm::default();
+    let mut vm = Vm::default();
     vm.registers.r7 = 0b0110_1111;
     vm.instructions.instructions = vec![
         // ALU Binary not from Register
@@ -288,7 +288,7 @@ pub fn it_binary_nots_r7() {
 
 #[test]
 pub fn it_increments_r0() {
-    let mut vm = smol_isa::Vm::default();
+    let mut vm = Vm::default();
     vm.registers.r0 = 0b111101;
     vm.instructions.instructions = vec![
         // ALU Incerement from Register
@@ -303,7 +303,7 @@ pub fn it_increments_r0() {
 
 #[test]
 pub fn it_increments_r2() {
-    let mut vm = smol_isa::Vm::default();
+    let mut vm = Vm::default();
     vm.registers.r2 = 123;
     vm.instructions.instructions = vec![
         // ALU Incerement from Register
@@ -318,7 +318,7 @@ pub fn it_increments_r2() {
 
 #[test]
 pub fn it_decrements_r7() {
-    let mut vm = smol_isa::Vm::default();
+    let mut vm = Vm::default();
     vm.registers.r7 = 0b01101111;
     vm.instructions.instructions = vec![
         // ALU Decrement from Register

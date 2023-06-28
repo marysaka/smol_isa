@@ -1,5 +1,5 @@
 fn main() {
-    let mut vm = smol_isa::Vm::default();
+    let mut vm = smol_vm::Vm::default();
     vm.registers.r0 = 1;
     vm.registers.r1 = 2;
     vm.instructions.instructions = vec![
