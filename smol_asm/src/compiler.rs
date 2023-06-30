@@ -111,6 +111,11 @@ pub fn compile_instructions(instrs: Vec<Instruction>) -> Vec<u8> {
                 args.insert(0, op);
                 args
             }
+
+            Instruction::Syscall(_) => {
+                // hardcoded syscall binary
+                [0b11101111].to_vec()
+            }
         })
         .collect();
 

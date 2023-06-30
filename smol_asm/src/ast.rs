@@ -6,7 +6,7 @@ trait Arg {
 }
 
 #[derive(Debug)]
-struct Arg0 {}
+pub struct Arg0 {}
 
 /* impl Arg for Arg0 {
     fn args(self) -> Vec<RegType> {
@@ -182,6 +182,7 @@ impl<T> InstrLine<T> {
 pub enum Instruction {
     Add(InstrLine<Arg2<R8, R8>>),
     AddI(InstrLine<Arg2<R8, I8>>),
+    Syscall(InstrLine<Arg0>),
 }
 
 fn parse_line(idx: usize, line: &str) -> Result<Instruction, String> {
@@ -197,6 +198,8 @@ fn parse_line(idx: usize, line: &str) -> Result<Instruction, String> {
             Arg2::<R8, I8>::try_parse(line)?,
             idx,
         )))
+    } else if instr == "syscall" {
+        Ok(Instruction::Syscall(InstrLine::new(Arg0 {}, idx)))
     } else {
         Err(format!(
             "On line: {}\nInstruction '{instr}' has not been implemented",
