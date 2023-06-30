@@ -3,6 +3,12 @@ use std::ops::{
     SubAssign,
 };
 
+mod registers;
+pub mod syscall;
+
+use registers::Registers;
+use syscall::vm_syscall;
+
 #[derive(Debug, Clone, Copy)]
 enum Either<L, R> {
     Left(L),
@@ -158,44 +164,6 @@ impl RegisterValue {
     }
 }
 
-#[derive(Debug, Default)]
-#[allow(dead_code)]
-pub struct Registers {
-    // Special registers
-    /// (16,ro) - Instruction Counter
-    pub ic: u16,
-    /// (16,ro) - Core Flags
-    pub fg: u16,
-    /// (16,rw) - Call Register
-    pub cr: u16,
-    /// (16,rw) - Stack pointer
-    pub sp: u16,
-    /// (16,rw) - Zero register (n-bits wide)
-    pub zr: u16,
-
-    // General purpose registers
-    /// 0th 8-bit general
-    pub r0: u8,
-    /// 1st 8-bit general
-    pub r1: u8,
-    /// 2nd 8-bit general
-    pub r2: u8,
-    /// 3th 8-bit general
-    pub r3: u8,
-    /// 4th 8-bit general
-    pub r4: u8,
-    /// 5th 8-bit general
-    pub r5: u8,
-    /// 6th 8-bit general
-    pub r6: u8,
-    /// 7th 8-bit general
-    pub r7: u8,
-    /// 0th 16-bit general
-    pub l0: u16,
-    /// 1th 16-bit general
-    pub l1: u16,
-}
-
 #[derive(Debug)]
 #[allow(dead_code)]
 pub struct Stack {
@@ -346,6 +314,35 @@ impl Vm {
         used
     }
 
+    fn decode_branch_instr(&mut self, instr: u8) {
+        match (instr >> 3) & 0b111 {
+            // Relative jump
+            0b000 => unimplemented!("Relative jump is not implemented"),
+            // Branch if equal
+            0b001 => unimplemented!("Branch if equal is not implemented"),
+            // Branch if not equal
+            0b010 => unimplemented!("Branch if not equal is not implemented"),
+            // Branch if greater than
+            0b011 => unimplemented!("Branch if not equal is not implemented"),
+            // Branch if less than
+            0b100 => unimplemented!("Branch if not equal is not implemented"),
+            // Call
+            0b101 => {
+                if instr & 0b111 == 0b111 {
+                    vm_syscall(&mut self.registers);
+                } else {
+                    unimplemented!("Only systemcall call is implemented");
+                }
+            }
+            // Return from call
+            0b110 => unimplemented!("Return from call is not implemented"),
+            // Return from interrupt
+            0b111 => unimplemented!("Return from interrupt is not implemented"),
+            // Since we use and (&) we limit ourself to values 0-3
+            _ => unimplemented!("Only Add AluFamily is implemnted"),
+        }
+    }
+
     fn decode_next_instr(&mut self) {
         let instr = self.instructions.get(self.registers.ic);
 
@@ -356,7 +353,7 @@ impl Vm {
             }
             0b01 => unimplemented!("LoadStore is not implemented"),
             0b10 => unimplemented!("StackIntr is not implemented"),
-            0b11 => unimplemented!("Branch is not implemented"),
+            0b11 => self.decode_branch_instr(instr),
             // Since we use and (&) we limit ourself to values 0-3
             _ => unreachable!(),
         }
