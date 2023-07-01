@@ -7,11 +7,18 @@ fn main() {
         exit(1);
     }
 
-    let file_contents = fs::read(&args[1]).unwrap();
+    /* let file_contents = fs::read(&args[1]).unwrap(); */
+    let file = smol_file::SmolFile::load(&args[1]);
 
     let mut vm = smol_vm::Vm::default();
-    vm.instructions.instructions = file_contents;
+    vm.instructions.instructions = file.instructions;
+    for storage in file.storage.items {
+        let mem = vm.stack.memory_mut();
+        if let Some(data) = storage.init_data {
+            let start = storage.offset as usize;
+            let end = start + storage.size as usize;
+            mem[start..end].copy_from_slice(&data);
+        }
+    }
     vm.run();
-
-    println!("{:#?}", vm.registers);
 }

@@ -435,7 +435,6 @@ impl Vm {
                     0b00 | 0b01 => {
                         let reg = self.instructions.get(self.registers.ic + 1);
                         let dec = self.decode_register(reg);
-                        println!("{dec:#?}");
                         self.registers.sp += self.decode_register(reg).value.as_u16();
                     }
                     // 8 bit immideate
