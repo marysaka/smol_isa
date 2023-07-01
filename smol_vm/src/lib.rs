@@ -215,11 +215,17 @@ impl Stack {
     }
 
     /// Last 2 bytes of stack memory is reserved for saving sp
-    pub fn save_stack_pointer(&mut self, sp: u16) {}
+    pub fn save_stack_pointer(&mut self, sp: u16) {
+        let [li, mi] = sp.to_le_bytes();
+        self.memory[(u16::MAX - 1) as usize] = li;
+        self.memory[(u16::MAX - 2) as usize] = mi;
+    }
 
     /// Last 2 bytes of stack memory is reserved for saving sp
-    pub fn load_stack_pointer(&mut self, sp: u16) -> u16 {
-        0
+    pub fn load_stack_pointer(&self) -> u16 {
+        let li = self.memory[(u16::MAX - 1) as usize];
+        let mi = self.memory[(u16::MAX - 2) as usize];
+        u16::from_le_bytes([li, mi])
     }
 }
 
@@ -444,7 +450,10 @@ impl Vm {
                     _ => unreachable!(),
                 }
             }
-            0b11 => unimplemented!("Unset variable is not implemented"),
+            0b11 => {
+                self.registers.sp = self.stack.load_stack_pointer();
+                used = 1;
+            }
             // Since we use and (&) we limit ourself to values 0-3
             _ => unimplemented!("decoding stack instr logic is broken"),
         }
