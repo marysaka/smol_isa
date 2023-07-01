@@ -2,5 +2,6 @@
 
 members = [
     "smol_asm",
+    "smol_file",
     "smol_vm",
 ]
