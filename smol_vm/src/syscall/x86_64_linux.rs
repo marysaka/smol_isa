@@ -27,7 +27,7 @@ pub fn vm_syscall(register: &mut Registers, stack: &mut Stack) {
 }
 
 unsafe fn vm_syscall_write(register: &mut Registers, stack: &mut Stack) {
-    let mut out = 0;
+    let mut out: i64;
     let sp = register.sp + register.r2 as u16;
     let data = stack.from_sp_mut(sp).as_mut_ptr();
     asm!(
@@ -42,7 +42,7 @@ unsafe fn vm_syscall_write(register: &mut Registers, stack: &mut Stack) {
 }
 
 unsafe fn vm_syscall_exit(register: &mut Registers) {
-    let mut out = 0;
+    let mut out: i64;
     asm!(
         "mov rax, 60",
         "syscall",

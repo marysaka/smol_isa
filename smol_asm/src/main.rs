@@ -1,13 +1,7 @@
-use std::{fmt::format, fs, process::exit};
+use std::{ fs, process::exit};
 
 mod ast;
 mod compiler;
-
-const FILE_DATA: &str = "
-
-    ADD r0 r1
-    ADDI r3 123
-";
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -20,5 +14,4 @@ fn main() {
     let tree = ast::parse_source(&file_contents).unwrap();
     let binary = compiler::compile_ast(tree);
     binary.save(&format!("{}.obj", &args[1]));
-    let bin2 = smol_file::SmolFile::load(&format!("{}.obj", &args[1]));
 }

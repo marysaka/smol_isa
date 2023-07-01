@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 trait Arg {
     fn args(self) -> Vec<RegType>;
     fn try_parse(input: &str) -> Result<Self, String>
@@ -17,6 +15,7 @@ pub struct Arg0 {}
 } */
 
 #[derive(Debug)]
+#[allow(dead_code)]
 struct Arg1<A1: Register> {
     arg1: A1,
 }
@@ -166,6 +165,7 @@ impl Register for I8 {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct InstrLine<T> {
     instr: T,
     line: usize,
@@ -237,7 +237,7 @@ fn parse_variable_value(value: &str) -> Vec<u8> {
     bytes
 }
 
-fn parse_variable_line<'a>(line: &'a str) -> Variable {
+fn parse_variable_line(line: &str) -> Variable {
     let mut items = line.split_ascii_whitespace();
     let name = items.next().unwrap();
     let size_str = items.next().expect("Variable needs a size");
@@ -261,13 +261,11 @@ fn parse_variables(src: &str) -> Vec<Variable> {
     let mut variables: Vec<Variable> = Vec::new();
 
     let mut var_start = false;
-    let mut var_end = false;
     for line in src.lines() {
         if line.starts_with("---") {
             if !var_start {
                 var_start = true;
             } else if var_start {
-                var_end = true;
                 break;
             }
             continue;
@@ -277,7 +275,7 @@ fn parse_variables(src: &str) -> Vec<Variable> {
             continue;
         }
 
-        if line.starts_with("#") {
+        if line.starts_with('#') {
             continue;
         }
 

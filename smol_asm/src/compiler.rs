@@ -42,6 +42,7 @@ impl Compile for I8 {
     }
 }
 
+#[allow(dead_code)]
 enum ALUType {
     Add,
     Subtract,
@@ -62,6 +63,7 @@ enum ALUType {
 /// `opcode[5]` - Function
 ///  * `0b0` - Increment
 ///  * `0b1` - Decrement
+#[allow(dead_code)]
 enum ALUSrc {
     Register,
     Immidiate,
@@ -70,6 +72,7 @@ enum ALUSrc {
 }
 
 fn compile_alu_equality(tt: ALUType, source: ALUSrc, is_16b: bool, noop: bool) -> u8 {
+    #[allow(clippy::unusual_byte_groupings)]
     let op = match tt {
         ALUType::Add => 0b00_000_0_0_0,
         ALUType::Subtract => 0b00_001_0_0_0,
@@ -135,7 +138,7 @@ fn variable_offset(name: &str, ast: &ASTTree, storage: &Storage) -> u16 {
         .variables
         .iter()
         .position(|v| v.name == name)
-        .expect(&format!("Variable '{name}' is not defined"));
+        .unwrap_or_else(|| panic!("Variable '{name}' is not defined"));
 
     storage.items[idx].offset
 }

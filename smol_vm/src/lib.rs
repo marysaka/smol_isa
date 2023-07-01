@@ -419,7 +419,7 @@ impl Vm {
     }
 
     fn decode_stack_instr(&mut self, instr: u8) -> u16 {
-        let mut used = 0;
+        let mut used: u16;
         match (instr >> 4) & 0b11 {
             0b00 => unimplemented!("Push is not implemented"),
             0b01 => unimplemented!("Pop is not implemented"),
@@ -434,7 +434,6 @@ impl Vm {
                     // 8 bit and 16 register has the same logic
                     0b00 | 0b01 => {
                         let reg = self.instructions.get(self.registers.ic + 1);
-                        let dec = self.decode_register(reg);
                         self.registers.sp += self.decode_register(reg).value.as_u16();
                     }
                     // 8 bit immideate
