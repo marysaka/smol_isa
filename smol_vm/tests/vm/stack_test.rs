@@ -58,3 +58,27 @@ pub fn it_loads_16b_register_variable_address() {
     vm.run();
     assert_eq!(vm.registers.sp, (u16::MAX / 2) + 700);
 }
+
+#[test]
+pub fn it_resets_stackpointer() {
+    let mut vm = Vm::default();
+    vm.registers.sp = 123;
+    // First make sure that the SP has been changed
+    vm.instructions.instructions = vec![
+        // Stack load variable immediate 8bit
+        0b10_10_1_0_00,
+        // Value of 10
+        10,
+    ];
+    vm.run();
+    assert_eq!(vm.registers.sp, (u16::MAX / 2) + 10);
+
+    vm.registers.ic = 0;
+    // Then make sure we actually reset it
+    vm.instructions.instructions = vec![
+        // Stack reset the variable pointer
+        0b10_11_0_0_00,
+    ];
+    vm.run();
+    assert_eq!(vm.registers.sp, 123);
+}
