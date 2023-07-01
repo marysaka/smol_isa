@@ -107,8 +107,16 @@ fn compile_variables(vars: &Vec<Variable>) -> Storage {
     let mut items: Vec<StorageItem> = Vec::new();
     for var in vars {
         let mut size = var.size;
-        // TODO: make sure that the data fits into the variable size
         let init_data = if let Some(data) = &var.bytes {
+            if data.len() != var.size as usize {
+                panic!(
+                    "Variable '{}' initial value's length expected to be {}, was {}",
+                    var.name,
+                    var.size,
+                    data.len()
+                );
+            }
+
             // Set the higest bit to signal initialised data
             size |= 0x8000;
             // Save space for the variable size
