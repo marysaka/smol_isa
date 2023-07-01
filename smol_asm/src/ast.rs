@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 trait Arg {
     fn args(self) -> Vec<RegType>;
     fn try_parse(input: &str) -> Result<Self, String>
@@ -35,6 +37,7 @@ impl<A1: Register, A2: Register> Arg for Arg2<A1, A2> {
     fn args(self) -> Vec<RegType> {
         vec![self.arg1.parse(), self.arg2.parse()]
     }
+
     fn try_parse(input: &str) -> Result<Self, String> {
         input.try_into()
     }
@@ -183,9 +186,113 @@ pub enum Instruction {
     Add(InstrLine<Arg2<R8, R8>>),
     AddI(InstrLine<Arg2<R8, I8>>),
     Syscall(InstrLine<Arg0>),
+    Sv(InstrLine<String>),
+    Uv(InstrLine<Arg0>),
 }
 
-fn parse_line(idx: usize, line: &str) -> Result<Instruction, String> {
+#[derive(Debug)]
+pub struct Variable {
+    pub name: String,
+    pub size: u16,
+    pub bytes: Option<Vec<u8>>,
+}
+
+#[derive(Debug)]
+pub struct ASTTree {
+    pub variables: Vec<Variable>,
+    pub instructions: Vec<Instruction>,
+}
+
+fn parse_variable_value(value: &str) -> Vec<u8> {
+    let mut bytes: Vec<u8> = Vec::new();
+    if value.starts_with('"') {
+        let mut closed = false;
+        let chars = value.as_bytes();
+        let mut idx = 1; // skip first "
+        while idx < chars.len() {
+            let byte = chars[idx];
+            // TODO: properly handle escaping
+            if byte == b'\\' && chars[idx + 1] == b'n' {
+                bytes.push(b'\n');
+                idx += 2;
+                continue;
+            }
+
+            if byte == b'"' {
+                closed = true;
+                break;
+            }
+
+            bytes.push(byte);
+            idx += 1;
+        }
+
+        if !closed {
+            panic!("Unclosed string");
+        }
+    } else {
+        panic!("Currently only string literal variables are suppored");
+    }
+
+    bytes
+}
+
+fn parse_variable_line<'a>(line: &'a str) -> Variable {
+    let mut items = line.split_ascii_whitespace();
+    let name = items.next().unwrap();
+    let size_str = items.next().expect("Variable needs a size");
+    let rest: String = items.collect::<Vec<&str>>().join(" ");
+    let bytes = if !rest.is_empty() {
+        Some(parse_variable_value(&rest))
+    } else {
+        None
+    };
+
+    let size = size_str.parse::<u16>().unwrap();
+
+    Variable {
+        name: name.into(),
+        size,
+        bytes,
+    }
+}
+
+fn parse_variables(src: &str) -> Vec<Variable> {
+    let mut variables: Vec<Variable> = Vec::new();
+
+    let mut var_start = false;
+    let mut var_end = false;
+    for line in src.lines() {
+        if line.starts_with("---") {
+            if !var_start {
+                var_start = true;
+            } else if var_start {
+                var_end = true;
+                break;
+            }
+            continue;
+        }
+
+        if !var_start {
+            continue;
+        }
+
+        if line.starts_with("#") {
+            continue;
+        }
+
+        if line.trim().is_empty() {
+            continue;
+        }
+
+        let var = parse_variable_line(line);
+        variables.push(var);
+    }
+
+    variables
+}
+
+fn parse_instruction_line(idx: usize, line: &str) -> Result<Instruction, String> {
     let instr = line.split_ascii_whitespace().next().unwrap().to_lowercase();
 
     if instr == "add" {
@@ -200,23 +307,40 @@ fn parse_line(idx: usize, line: &str) -> Result<Instruction, String> {
         )))
     } else if instr == "syscall" {
         Ok(Instruction::Syscall(InstrLine::new(Arg0 {}, idx)))
+    } else if instr == "uv" {
+        Ok(Instruction::Uv(InstrLine::new(Arg0 {}, idx)))
+    } else if instr == "sv" {
+        let args: Vec<&str> = line.split_ascii_whitespace().collect();
+        if args.len() < 2 {
+            panic!("SV requires an argument");
+        }
+        Ok(Instruction::Sv(InstrLine::new(args[1].into(), idx)))
     } else {
         Err(format!(
-            "On line: {}\nInstruction '{instr}' has not been implemented",
-            line
+            "On line: {idx}: Instruction '{instr}' has not been implemented"
         ))
     }
 }
 
-pub fn parse_source(source: &str) -> Result<Vec<Instruction>, String> {
-    let lines: Vec<Instruction> = source
+pub fn parse_source(source: &str) -> Result<ASTTree, String> {
+    let variables = parse_variables(source);
+    let var_end = if let Some(idx) = source.rfind('-') {
+        idx + 1
+    } else {
+        0
+    };
+
+    let instructions: Vec<Instruction> = source[var_end..]
         .lines()
         .enumerate()
         .map(|(idx, line)| (idx, line.trim()))
         .filter(|(_, line)| !line.is_empty())
         .filter(|(_, line)| !line.starts_with('#'))
-        .map(|(idx, line)| parse_line(idx, line).unwrap())
+        .map(|(idx, line)| parse_instruction_line(idx, line).unwrap())
         .collect();
 
-    Ok(lines)
+    Ok(ASTTree {
+        variables,
+        instructions,
+    })
 }

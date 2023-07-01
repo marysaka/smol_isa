@@ -18,6 +18,7 @@ fn main() {
 
     let file_contents = fs::read_to_string(&args[1]).unwrap();
     let tree = ast::parse_source(&file_contents).unwrap();
-    let binary = compiler::compile_instructions(tree);
-    fs::write(format!("{}.obj", &args[1]), binary).unwrap();
+    let binary = compiler::compile_ast(tree);
+    binary.save(&format!("{}.obj", &args[1]));
+    let bin2 = smol_file::SmolFile::load(&format!("{}.obj", &args[1]));
 }
