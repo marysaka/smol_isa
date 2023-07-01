@@ -135,6 +135,7 @@ impl BitAndAssign for RegEither {
     }
 }
 
+#[derive(Debug)]
 enum Register {
     Ic,
     Fg,
@@ -153,6 +154,7 @@ enum Register {
     L1,
 }
 
+#[derive(Debug)]
 struct RegisterValue {
     value: RegEither,
     register: Register,
@@ -167,8 +169,58 @@ impl RegisterValue {
 #[derive(Debug)]
 #[allow(dead_code)]
 pub struct Stack {
-    /// Stack size of 16kib since that's what the u16 stack pointer allows.
-    pub memory: [u8; u16::MAX as usize],
+    /// Stack size of 64kib since that's what the u16 stack pointer allows.
+    memory: [u8; u16::MAX as usize],
+}
+
+impl Stack {
+    // Get the memory space from the stack pointer
+    pub fn from_sp(&self, sp: u16) -> &[u8] {
+        &self.memory[sp as usize..]
+    }
+
+    // Get the memory space from the stack pointer
+    pub fn from_sp_mut(&mut self, sp: u16) -> &mut [u8] {
+        &mut self.memory[sp as usize..]
+    }
+
+    /// Memory is the whole 64kib memory
+    pub fn memory(&self) -> &[u8] {
+        &self.memory
+    }
+
+    /// Memory is the whole 64kib memory
+    pub fn memory_mut(&mut self) -> &mut [u8] {
+        &mut self.memory
+    }
+
+    /// Stack is the first 32kib bytes
+    pub fn stack(&self) -> &[u8] {
+        &self.memory[..(u16::MAX / 2) as usize]
+    }
+
+    /// Stack is the first 32kib bytes
+    pub fn stack_mut(&mut self) -> &mut [u8] {
+        &mut self.memory[..(u16::MAX / 2) as usize]
+    }
+
+    /// Variable space is the last 32kib bytes
+    pub fn variable(&self) -> &[u8] {
+        &self.memory[..(u16::MAX / 2) as usize]
+    }
+
+    /// Variable space is the last 32kib bytes
+    pub fn variable_mut(&mut self) -> &mut [u8] {
+        &mut self.memory[(u16::MAX / 2) as usize..]
+    }
+
+    /// Last 2 bytes of stack memory is reserved for saving sp
+    pub fn save_stack_pointer(&mut self, sp: u16) {}
+
+    /// Last 2 bytes of stack memory is reserved for saving sp
+    pub fn load_stack_pointer(&mut self, sp: u16) -> u16 {
+        0
+    }
 }
 
 impl Default for Stack {
@@ -245,6 +297,23 @@ impl Vm {
             Register::Sp => self.registers.sp = reg.value.as_u16(),
             Register::Zr => self.registers.zr = reg.value.as_u16(),
         }
+    }
+
+    fn immediate_instr(&self, ic: u16) -> u8 {
+        self.instructions.instructions[ic as usize]
+    }
+
+    /// Turn instructions from ic and ic+1 into u16
+    fn immediate_instr_16b(&self, ic: u16) -> u16 {
+        // TODO: make this faster with unsafe
+        let instrs = &self.instructions.instructions[ic as usize..];
+        // The archicture is little endian so we need to create u16 from le bytes
+        u16::from_le_bytes([instrs[0], instrs[1]])
+    }
+
+    fn decode_register(&self, regs: u8) -> RegisterValue {
+        let r0 = regs & 0b1111;
+        self.register_val(r0)
     }
 
     fn decode_registers(&self, regs: u8) -> (RegisterValue, RegisterValue) {
@@ -343,6 +412,46 @@ impl Vm {
         }
     }
 
+    fn decode_stack_instr(&mut self, instr: u8) -> u16 {
+        let mut used = 0;
+        match (instr >> 4) & 0b11 {
+            0b00 => unimplemented!("Push is not implemented"),
+            0b01 => unimplemented!("Pop is not implemented"),
+            0b10 => {
+                // We always need to save our stack pointer
+                self.stack.save_stack_pointer(self.registers.sp);
+                // Then we can set the pointer into start of the variable space
+                self.registers.sp = u16::MAX / 2;
+                // Set used to two since only 16 immideate uses 3 (self + 1/2)
+                used = 2;
+                match (instr >> 2) & 0b11 {
+                    // 8 bit and 16 register has the same logic
+                    0b00 | 0b01 => {
+                        let reg = self.instructions.get(self.registers.ic + 1);
+                        let dec = self.decode_register(reg);
+                        println!("{dec:#?}");
+                        self.registers.sp += self.decode_register(reg).value.as_u16();
+                    }
+                    // 8 bit immideate
+                    0b10 => {
+                        self.registers.sp += self.immediate_instr(self.registers.ic + 1) as u16;
+                    }
+                    // 16 bit immideate
+                    0b11 => {
+                        self.registers.sp += self.immediate_instr_16b(self.registers.ic + 1);
+                        used = 3;
+                    }
+                    _ => unreachable!(),
+                }
+            }
+            0b11 => unimplemented!("Unset variable is not implemented"),
+            // Since we use and (&) we limit ourself to values 0-3
+            _ => unimplemented!("decoding stack instr logic is broken"),
+        }
+
+        used
+    }
+
     fn decode_next_instr(&mut self) {
         let instr = self.instructions.get(self.registers.ic);
 
@@ -352,8 +461,14 @@ impl Vm {
                 self.registers.ic += used;
             }
             0b01 => unimplemented!("LoadStore is not implemented"),
-            0b10 => unimplemented!("StackIntr is not implemented"),
-            0b11 => self.decode_branch_instr(instr),
+            0b10 => {
+                let used = self.decode_stack_instr(instr);
+                self.registers.ic += used;
+            }
+            0b11 => {
+                self.decode_branch_instr(instr);
+                self.registers.ic += 1;
+            }
             // Since we use and (&) we limit ourself to values 0-3
             _ => unreachable!(),
         }
