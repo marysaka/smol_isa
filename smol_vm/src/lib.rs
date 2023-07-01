@@ -329,7 +329,7 @@ impl Vm {
             // Call
             0b101 => {
                 if instr & 0b111 == 0b111 {
-                    vm_syscall(&mut self.registers);
+                    vm_syscall(&mut self.registers, &mut self.stack);
                 } else {
                     unimplemented!("Only systemcall call is implemented");
                 }

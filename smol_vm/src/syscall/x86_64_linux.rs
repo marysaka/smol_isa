@@ -1,9 +1,9 @@
 use std::arch::asm;
 
-use crate::registers::Registers;
+use crate::{registers::Registers, Stack};
 
 /// Sycall interface, "return" value will be in r0
-pub fn vm_syscall(register: &mut Registers) {
+pub fn vm_syscall(register: &mut Registers, stack: &mut Stack) {
     // x86_64 syscall table -> smol is mapping
     // argument | x64 reg | smol reg
     // ---------|---------|----------
@@ -19,10 +19,26 @@ pub fn vm_syscall(register: &mut Registers) {
     // the return value of the system call will be in rax (r0)
     unsafe {
         match register.r0 {
+            1 => vm_syscall_write(register, stack),
             60 => vm_syscall_exit(register),
             id => panic!("System call with id: '{id}' is not implemented for x86_64 linux"),
         }
     }
+}
+
+unsafe fn vm_syscall_write(register: &mut Registers, stack: &mut Stack) {
+    let mut out = 0;
+    let sp = register.sp + register.r2 as u16;
+    let data = stack.from_sp_mut(sp).as_mut_ptr();
+    asm!(
+        "mov rax, 1",
+        "syscall",
+        in("rdi") register.r1 as i64,
+        in("rsi") data,
+        in("rdx") register.r3 as i64,
+        lateout("rax") out,
+    );
+    register.r0 = out as u8;
 }
 
 unsafe fn vm_syscall_exit(register: &mut Registers) {
