@@ -47,7 +47,6 @@ pub fn it_loads_register_variable_address() {
 #[test]
 pub fn it_loads_16b_register_variable_address() {
     let mut vm = Vm::default();
-    let mut vm = Vm::default();
     vm.registers.l1 = 700;
     vm.instructions.instructions = vec![
         // Stack load variable register 16 bit

@@ -1,4 +1,4 @@
-use std::{ fs, process::exit};
+use std::{fs, process::exit};
 
 mod ast;
 mod compiler;
