@@ -1,0 +1,6 @@
+[package]
+name = "smol-isa"
+edition.workspace = true
+version.workspace = true
+
+[dependencies]

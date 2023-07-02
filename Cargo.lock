@@ -20,6 +20,10 @@ name = "smol-file"
 version = "0.1.0"
 
 [[package]]
+name = "smol-isa"
+version = "0.1.0"
+
+[[package]]
 name = "smol-vm"
 version = "0.1.0"
 dependencies = [

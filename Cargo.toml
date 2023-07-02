@@ -1,6 +1,7 @@
 [workspace]
 
 members = [
+    "smol_isa",
     "smol_asm",
     "smol_file",
     "smol_vm",
@@ -12,6 +13,7 @@ version = "0.1.0"
 edition = "2021"
 
 [workspace.dependencies]
+smol-isa = { path ="./smol_isa" }
 smol-asm = { path ="./smol_asm" }
 smol-file = { path ="./smol_file" }
 smol-vm = { path ="./smol_vm" }
