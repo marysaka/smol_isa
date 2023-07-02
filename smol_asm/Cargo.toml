@@ -1,5 +1,5 @@
 [package]
-name = "smol_asm"
+name = "smol-asm"
 edition.workspace = true
 version.workspace = true
 

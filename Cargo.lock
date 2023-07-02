@@ -9,6 +9,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b4668fb0ea861c1df094127ac5f1da3409a82116a4ba74fca2e58ef927159bb3"
 
 [[package]]
+name = "smol-asm"
+version = "0.1.0"
+dependencies = [
+ "smol-file",
+]
+
+[[package]]
 name = "smol-file"
 version = "0.1.0"
 
@@ -17,12 +24,5 @@ name = "smol-vm"
 version = "0.1.0"
 dependencies = [
  "libc",
- "smol-file",
-]
-
-[[package]]
-name = "smol_asm"
-version = "0.1.0"
-dependencies = [
  "smol-file",
 ]
