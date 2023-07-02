@@ -3,19 +3,19 @@
 version = 3
 
 [[package]]
+name = "smol-file"
+version = "0.1.0"
+
+[[package]]
 name = "smol-vm"
 version = "0.1.0"
 dependencies = [
- "smol_file",
+ "smol-file",
 ]
 
 [[package]]
 name = "smol_asm"
 version = "0.1.0"
 dependencies = [
- "smol_file",
+ "smol-file",
 ]
-
-[[package]]
-name = "smol_file"
-version = "0.1.0"
