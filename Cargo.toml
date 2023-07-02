@@ -15,3 +15,5 @@ edition = "2021"
 smol-asm = { path ="./smol_asm" }
 smol-file = { path ="./smol_file" }
 smol-vm = { path ="./smol_vm" }
+
+libc = "0.2"
